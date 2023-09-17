@@ -4,7 +4,7 @@ import os
 import requests
 
 from datetime import datetime, timedelta
-from azure.data.tables import TableServiceClient
+from azure.data.tables import TableServiceClient, UpdateMode
 
 table_service = TableServiceClient.from_connection_string(
     conn_str=os.environ["AzureWebJobsStorage"]
@@ -55,7 +55,7 @@ def get_price(currency, vm):
             "MonthlyPrice": monthlyPrice,
         }
 
-        cache_table_client.create_entity(entity=cacheEntry)
+        cache_table_client.upsert_entity(entity=cacheEntry, mode=UpdateMode.REPLACE)
 
         logging.info(f"Creating price cache entry {lookup_string}")
     
