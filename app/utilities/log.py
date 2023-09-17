@@ -32,3 +32,16 @@ def log_vm_event(vm, event):
     }
 
     logging_table_client.create_entity(entity=logEntry)
+
+
+def get_vm_logs(vm_id):
+    matches = resourceIdRegex.match(vm_id)
+    rowkey = f'{matches["subscription_id"]}--{matches["vm_name"].replace("/", "-")}'
+    results = []
+
+    for result in logging_table_client.query_entities(f"RowKey eq '{rowkey}'"):
+        results.append({
+            "timestamp": str(result._metadata["timestamp"]).split('.')[0],
+            "event": result["Event"]
+        })
+    return results

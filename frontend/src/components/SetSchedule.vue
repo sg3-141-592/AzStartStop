@@ -4,11 +4,7 @@
 
     <hr />
 
-    <progress
-      v-if="formDisabled"
-      class="progress is-small is-primary"
-      max="100"
-    >
+    <progress v-if="formDisabled" class="progress is-small is-primary" max="100">
       15%
     </progress>
 
@@ -17,19 +13,11 @@
         <label class="label">Start Time</label>
         <div class="field has-addons has-addons-right">
           <div class="control is-expanded">
-            <input
-              v-model="vmData.startTime"
-              class="input"
-              type="time"
-              :disabled="vmData.stopTime == null || formDisabled"
-            />
+            <input v-model="vmData.startTime" class="input" type="time"
+              :disabled="vmData.stopTime == null || formDisabled" />
           </div>
           <p v-if="vmData.startTime" class="control">
-            <button
-              @click="clearStartTime()"
-              class="button is-primary"
-              :disabled="formDisabled"
-            >
+            <button @click="clearStartTime()" class="button is-primary" :disabled="formDisabled">
               Clear
             </button>
           </p>
@@ -39,12 +27,7 @@
         <div class="field">
           <label class="label">Stop Time</label>
           <div class="control">
-            <input
-              v-model="vmData.stopTime"
-              class="input"
-              type="time"
-              :disabled="formDisabled"
-            />
+            <input v-model="vmData.stopTime" class="input" type="time" :disabled="formDisabled" />
           </div>
         </div>
       </div>
@@ -54,59 +37,31 @@
       <label class="label">Days of Week</label>
       <div class="columns has-text-centered is-mobile">
         <div class="column">
-          <input
-            type="checkbox"
-            v-model="vmData.daysOfWeek.Mon"
-            :disabled="formDisabled"
-          />
+          <input type="checkbox" v-model="vmData.daysOfWeek.Mon" :disabled="formDisabled" />
           Mon
         </div>
         <div class="column">
-          <input
-            type="checkbox"
-            v-model="vmData.daysOfWeek.Tue"
-            :disabled="formDisabled"
-          />
+          <input type="checkbox" v-model="vmData.daysOfWeek.Tue" :disabled="formDisabled" />
           Tue
         </div>
         <div class="column">
-          <input
-            type="checkbox"
-            v-model="vmData.daysOfWeek.Wed"
-            :disabled="formDisabled"
-          />
+          <input type="checkbox" v-model="vmData.daysOfWeek.Wed" :disabled="formDisabled" />
           Wed
         </div>
         <div class="column">
-          <input
-            type="checkbox"
-            v-model="vmData.daysOfWeek.Thu"
-            :disabled="formDisabled"
-          />
+          <input type="checkbox" v-model="vmData.daysOfWeek.Thu" :disabled="formDisabled" />
           Thu
         </div>
         <div class="column">
-          <input
-            type="checkbox"
-            v-model="vmData.daysOfWeek.Fri"
-            :disabled="formDisabled"
-          />
+          <input type="checkbox" v-model="vmData.daysOfWeek.Fri" :disabled="formDisabled" />
           Fri
         </div>
         <div class="column">
-          <input
-            type="checkbox"
-            v-model="vmData.daysOfWeek.Sat"
-            :disabled="formDisabled"
-          />
+          <input type="checkbox" v-model="vmData.daysOfWeek.Sat" :disabled="formDisabled" />
           Sat
         </div>
         <div class="column">
-          <input
-            type="checkbox"
-            v-model="vmData.daysOfWeek.Sun"
-            :disabled="formDisabled"
-          />
+          <input type="checkbox" v-model="vmData.daysOfWeek.Sun" :disabled="formDisabled" />
           Sun
         </div>
       </div>
@@ -116,27 +71,53 @@
       <p v-for="error in formErrors" :key="error">{{ error }}</p>
     </div>
 
+    <hr />
+
+    <button @click="logsExpanded = !logsExpanded; getVMLogs()" class="button is-light is-pulled-left">
+      <span class="icon is-medium">
+        <div v-if="logsExpanded === false">
+          <i class="fas fa-angles-up"></i>
+        </div>
+        <div v-else>
+          <i class="fas fa-angles-down"></i>
+        </div>
+      </span>
+      <span>Logs</span>
+    </button>
+
     <div class="field is-grouped is-grouped-right">
       <div class="control">
-        <button
-          v-if="emptySchedule == false"
-          @click="removeSchedule()"
-          class="button is-primary"
-          :disabled="formDisabled"
-        >
+        <button v-if="emptySchedule == false" @click="removeSchedule()" class="button is-primary"
+          :disabled="formDisabled">
           <i class="fa-solid fa-xmark"></i>&nbsp;Remove Schedule
         </button>
       </div>
       <div class="control">
-        <button
-          @click="updateSchedule()"
-          class="button is-link is-right"
-          :disabled="formDisabled || formErrors.length > 0"
-        >
+        <button @click="updateSchedule()" class="button is-link is-right"
+          :disabled="formDisabled || formErrors.length > 0">
           <i class="fa-regular fa-clock"></i>&nbsp;Apply
         </button>
       </div>
     </div>
+
+    <!-- Show logs -->
+    <div v-if="logsExpanded">
+      <table class="table is-bordered is-fullwidth">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Event</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="log in vmLogs" :key="log">
+            <td>{{ log.timestamp }}</td>
+            <td>{{ log.event }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
   </div>
 </template>
 
@@ -189,6 +170,17 @@ export default {
     }
   },
   methods: {
+    getVMLogs: function () {
+      if (this.vmLogs == null) {
+        fetch(`/api/vm/logs?id=${this.vmData.id}`, {
+          method: 'GET'
+        })
+          .then(response => response.json())
+          .then(data => {
+            this.vmLogs = data;
+          })
+      }
+    },
     clearStartTime: function () {
       this.vmData.startTime = null;
     },
@@ -233,6 +225,8 @@ export default {
       vmData: null,
       formErrors: [],
       emptySchedule: null,
+      logsExpanded: false,
+      vmLogs: null
     };
   },
 };

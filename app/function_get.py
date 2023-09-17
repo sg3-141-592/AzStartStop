@@ -137,3 +137,13 @@ def get_vms(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as ex:
         logging.warn(traceback.format_exc())
         return func.HttpResponse(str(ex), status_code=500)
+
+@get_bp.function_name(name="VMLogs")
+@get_bp.route(route="api/vm/logs", auth_level=func.AuthLevel.ANONYMOUS)
+def get_vm_logs(req: func.HttpRequest) -> func.HttpResponse:
+    try:
+        vm_id = req.params["id"]
+        return func.HttpResponse(json.dumps(utilities.get_vm_logs(vm_id)))
+    except Exception as ex:
+        logging.warn(traceback.format_exc())
+        return func.HttpResponse(str(ex), status_code=500)

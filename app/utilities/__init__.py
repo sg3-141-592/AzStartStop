@@ -1,5 +1,5 @@
 from .vms import set_vm_state, extract_vm_state
-from .log import log_vm_event
+from .log import log_vm_event, get_vm_logs
 from .azure import get_subscriptions
 from .settings import get_setting, set_setting, CURRENCIES
 from .cache import get_price
