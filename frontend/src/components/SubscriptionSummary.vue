@@ -27,9 +27,9 @@
         <div v-if="expanded === true" class="columns">
             <div class="column">
                 <h2 class="has-text-white is-underlined">VM Spend</h2>
-                <a class="has-text-white has-text-weight-bold is-size-4">{{ calcVMSpend() == 0 ? "--" : currencyText(calcVMSpend()) }}</a><a
+                <a class="has-text-white has-text-weight-bold is-size-4">{{ calcVMSpend() == 0 ? "--" : currencyText(calcVMSpend(), this.currency) }}</a><a
                     class="has-text-white"> last month</a>
-                <p><a class="has-text-white has-text-weight-bold is-size-4">{{ currencyText(calcEstSpend()) }}</a><a
+                <p><a class="has-text-white has-text-weight-bold is-size-4">{{ currencyText(calcEstSpend(), this.monthlyCurrency) }}</a><a
                         class="has-text-white"> est. next month</a></p>
                 <!-- <p class="has-text-white"><i class="fa-solid fa-arrow-trend-down"></i> $1,092 month</p> -->
             </div>
@@ -54,9 +54,13 @@ export default {
     props: ['vms'],
     watch: {
         vms: function(newVms) {
-            // Try and get the currency
+            // Try and get the bill currency
             if(newVms != null && newVms.length > 0) {
                 this.currency = newVms[0].actualCostCurrency
+            }
+            // Try and get the estimate currency
+            if(newVms != null && newVms.length > 0) {
+                this.monthlyCurrency = newVms[0].monthlyCostCurrency
             }
         }
     },
@@ -102,7 +106,8 @@ export default {
     data() {
         return {
             expanded: false,
-            currency: "usd"
+            currency: null,
+            monthlyCurrency: null,
         }
     }
 }
