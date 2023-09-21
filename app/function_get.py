@@ -119,7 +119,7 @@ def get_vms(req: func.HttpRequest) -> func.HttpResponse:
                 "name": vm.name,
                 "sku": vm.hardware_profile.vm_size,
                 "monthlyCost": monthlyPrice,
-                "estimatedCost": None,
+                "monthlyCostCurrency": currency,
                 "actualCost": actualCost,
                 "actualCostCurrency": actualCostCurrency,
                 "resourceGroup": resourceGroup
