@@ -1,5 +1,5 @@
 <template>
-    <h1 class="title">Settings</h1><p>Release 1.1-preview, September 2023</p>
+    <h1 class="title">Settings</h1><p>Release 1.2-preview, September 2023</p>
     <hr />
     <div class="field">
         <label class="label">Timezone</label>

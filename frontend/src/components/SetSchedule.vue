@@ -170,6 +170,8 @@ export default {
           if (newVal.startTime && newVal.stopTime) {
             if (timeToDate(newVal.startTime) >= timeToDate(newVal.stopTime)) {
               errors.push("Start time should be before stop time");
+            } else if (timeToDate(newVal.stopTime) - timeToDate(newVal.startTime) < 1800000) {
+              errors.push("Schedule should be at least 30 minutes long")
             }
           }
         }
