@@ -12,7 +12,7 @@ startstop_bp = func.Blueprint()
 
 @startstop_bp.function_name(name="StartStop")
 @startstop_bp.schedule(
-    schedule="*/15 * * * *", arg_name="timer", run_on_startup=False, use_monitor=False
+    schedule="*/5 * * * *", arg_name="timer", run_on_startup=False, use_monitor=False
 )
 def start_stop_vms(timer):
 
@@ -32,6 +32,8 @@ def start_stop_vms(timer):
         compute_client = ComputeManagementClient(
             credential=DefaultAzureCredential(exclude_environment_credential=True), subscription_id=subscription["id"]
         )
+
+        events = []
 
         for vm in compute_client.virtual_machines.list_all():
             logging.info(vm.id)
@@ -70,15 +72,17 @@ def start_stop_vms(timer):
                             logging.info(f"[{vm.name}]: VM should be running")
                             if vm_state != "running":
                                 utilities.log_vm_event(vm, "starting")
+                                events.append(utilities.set_vm_state('started', vm, compute_client))
                                 logging.info(
-                                    f"[{vm.name}]: {utilities.set_vm_state('started', vm, compute_client).wait()}"
+                                    f"[{vm.name}]: starting..."
                                 )
                         else:
                             logging.info(f"[{vm.name}]: VM should be stopped")
                             if vm_state == "running":
                                 utilities.log_vm_event(vm, "stopping")
+                                events.append(utilities.set_vm_state('stopped', vm, compute_client))
                                 logging.info(
-                                    f"[{vm.name}]: {utilities.set_vm_state('stopped', vm, compute_client).wait()}"
+                                    f"[{vm.name}]: stopping..."
                                 )
                     else:
                         logging.info(f"[{vm.name}]: is not scheduled to be on today")
@@ -98,10 +102,16 @@ def start_stop_vms(timer):
                         if current_time.time() > stop_time:
                             vm_state = utilities.extract_vm_state(vm, compute_client)
                             if vm_state == "running":
+                                events.append(utilities.set_vm_state('stopped', vm, compute_client))
                                 logging.warning(
-                                    f"[{vm.name}]: {utilities.set_vm_state('stopped', vm, compute_client).wait()}"
+                                    f"[{vm.name}]: stopping..."
                                 )
                     else:
                         logging.warning(
                             f"[{vm.name}]: is not scheduled to be stopped today"
                         )
+        
+        # Wait for all events to complete
+        for event in events:
+            event.wait()
+

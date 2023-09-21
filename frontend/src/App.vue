@@ -68,7 +68,7 @@ export default {
       signUpDisabled: false,
       signedUp: false,
       settingsView: false,
-      showSignUps: true
+      showSignUps: false
     };
   },
 };
