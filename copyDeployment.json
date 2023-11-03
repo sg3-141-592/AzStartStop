@@ -1,0 +1,100 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string"
+        },
+        "storageAccountContainer": {
+            "type": "string"
+        },
+        "downloadUrl": {
+            "type": "string"
+        },
+        "targetBlobFilename": {
+            "type": "string"
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-02-01",
+            "name": "[parameters('storageAccountName')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "allowBlobPublicAccess": false,
+                "minimumTlsVersion": "TLS1_2"
+            }
+        },
+        {
+            "name": "[concat(parameters('storageAccountName'), '/default/', parameters('storageAccountContainer'))]",
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2023-01-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "publicAccess": "None"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "copyAzStartStopDeployment",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', parameters('storageAccountName'), 'default', parameters('storageAccountContainer'))]"
+            ],
+            "kind": "AzurePowerShell",
+            "properties": {
+                "azPowerShellVersion": "8.3",
+                "timeout": "PT10M",
+                "retentionInterval": "P1D",
+                "arguments": "[format(' -storageAccountName {0} -storageAccountKey {1} -storageAccountContainer {2} -downloadUrl {3} -targetBlobFilename {4}', parameters('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value, parameters('storageAccountContainer'), parameters('downloadUrl'), parameters('targetBlobFilename'))]",
+                "cleanupPreference": "Always",
+                "scriptContent": "
+                    param(
+                        [string] [Parameter(Mandatory=$true)] $storageAccountName,
+                        [string] [Parameter(Mandatory=$true)] $storageAccountKey,
+                        [string] [Parameter(Mandatory=$true)] $storageAccountContainer,
+                        [string] [Parameter(Mandatory=$true)] $downloadUrl,
+                        [string] [Parameter(Mandatory=$true)] $targetBlobFilename
+                    )
+
+                    $storageContext = New-AzStorageContext -StorageAccountName $storageAccountName -StorageAccountKey $storageAccountKey
+
+                    $WebClient = New-Object System.Net.WebClient
+                    $content = $WebClient.DownloadFile($downloadUrl, '/tmp/download_file')
+                    $WebClient.Dispose()
+
+                    Set-AzStorageBlobContent -Container $storageAccountContainer -Blob $targetBlobFilename -Context $storageContext -File '/tmp/download_file' -Force
+
+                    $DeploymentScriptOutputs = @{}
+
+                    $DeploymentScriptOutputs['deploymentSasToken'] = New-AzStorageBlobSASToken -Context $storageContext `
+                        -Container $storageAccountContainer `
+                        -Blob $targetBlobFilename `
+                        -Permission r `
+                        -ExpiryTime (Get-Date).AddYears(10) `
+                        -FullUri
+                "
+            }
+        }
+    ],
+    "outputs": {
+        "deploymentSasToken": {
+            "type": "string",
+            "value": "[reference('copyAzStartStopDeployment').outputs.deploymentSasToken]"
+        },
+        "storageAccountKey": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-06-01').keys[0].value]"
+            // Note: we have to do this because of ordering issues with the listKeys() function in arm templates
+            // https://bmoore-msft.blog/2020/07/26/resource-not-found-dependson-is-not-working/
+        }
+    }
+  }

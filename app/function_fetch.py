@@ -6,11 +6,31 @@ import datetime
 import json
 import logging
 import os
+import requests
 import time
 import traceback
 import utilities
 
 fetch_bp = func.Blueprint()
+
+@fetch_bp.function_name(name="CheckForUpdates")
+@fetch_bp.schedule(
+    schedule="50 22 * * *", arg_name="timer", run_on_startup=False, use_monitor=False
+)
+def check_for_updates(timer):
+    # Check if a new version is available
+    etag = utilities.get_setting("VersionEtag")
+    result = requests.head(utilities.DEPLOYMENT_URL, headers={"If-None-Match": f"{etag}"})
+    if result.status_code == 200:
+        utilities.copy_url_to_blob()
+        # Update etag for future deployments
+        etag = result.headers["ETag"]
+        utilities.set_setting("VersionEtag", etag)
+        logging.info(f"Deployment updated at {str(datetime.datetime.now())}, {etag}")
+    elif result.status_code == 304:
+        logging.info(f"Version {etag} is up to date")
+    else:
+        logging.error(f"Error checking for updates: {result.status_code}")
 
 @fetch_bp.function_name(name="FetchCosts")
 @fetch_bp.schedule(
