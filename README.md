@@ -19,6 +19,16 @@ Azure (Public)
 
 After installation you'll need to provide _VM Contributor_ and _Cost Management Reader_ permissions to the User Assigned Managed Identity created during deployment.
 
+# Enable Authentication
+You can lock down access to Az. Start Stop to limit who can change your schedules to users in your Active Directory.
+In the deployed Function App, open the Authentication blade and select "Add identity provider".
+
+![](./media/authenticationBlade.png)
+
+Select Identity Provider "Microsoft". The default settings are fine to limit access to users in your Tenant.
+
+![](./media/defaultAuthenticationSettings.png)
+
 # License
 
 This project is licensed under [MIT](./LICENSE.md)
