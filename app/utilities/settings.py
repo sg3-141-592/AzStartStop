@@ -25,6 +25,8 @@ def get_setting(name):
     return None
 
 # If they don't exist create default settings
+if not get_setting("VersionEtag"):
+    set_setting("VersionEtag", "\"0x8DBBADD98158CBA\"")
 if not get_setting("Timezone"):
     set_setting("Timezone", "UTC")
 if not get_setting("Currency"):
