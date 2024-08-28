@@ -59,7 +59,7 @@ az functionapp cors add --name compactcloud-startstop-1 --resource-group compact
 # I've been building using v18.7.1
 npm run build
 # We have to do this to bundle the front-end with the function app
-copy frontend/dist app/dist
+cp -r frontend/dist/ app/dist
 # Carry out the build locally creating a full .squashfs build of the app
-func azure functionapp publish compactcloud-example-deploy --build local --build-native-deps
+func azure functionapp publish compactcloud-startstop-1 --build local --build-native-deps
 ```

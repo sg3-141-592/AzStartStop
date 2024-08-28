@@ -3,3 +3,4 @@
 **/site/
 *.vsix
 scratch*
+venv/

@@ -15,8 +15,11 @@ cache_table_client = table_service.get_table_client(table_name="pricecache")
 
 def get_price(currency, vm):
     vm_type = "Linux"
-    if vm.os_profile.windows_configuration:
-        vm_type = "Windows"
+    # Fix for existing issue https://github.com/sg3-141-592/AzStartStop/issues/15
+    # windows_configuration doesn't exist on all VMs
+    if hasattr(vm.os_profile, 'windows_configuration'):
+        if vm.os_profile.windows_configuration:
+            vm_type = "Windows"
     
     lookup_string = f"{currency}_{vm.location}_{vm.hardware_profile.vm_size}_{vm_type}"
     # Create datetime comparison string from a week ago
